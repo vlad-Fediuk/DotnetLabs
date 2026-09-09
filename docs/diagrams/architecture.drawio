@@ -1,0 +1,301 @@
+<mxfile host="app.diagrams.net" agent="Antigravity" pages="3">
+  <diagram id="page-1" name="6.1. Композиція цільової архітектури">
+    <mxGraphModel dx="1768" dy="929" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=18;fontStyle=1;" value="&lt;b&gt;Контейнерна діаграма композиції цільової архітектури (C4 Container Level)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="40" width="650" x="350" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e2e3e5;strokeColor=#383d41;strokeWidth=2;fontSize=13;" value="&lt;b&gt;Клієнт / Web SPA / Mobile App&lt;/b&gt;&lt;br/&gt;[React / Vue / iOS / Android]" vertex="1">
+          <mxGeometry height="60" width="240" x="560" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;fontSize=13;" value="&lt;b&gt;ApiGateway (Ocelot)&lt;/b&gt;&lt;br/&gt;порт 5000&lt;br/&gt;&lt;b&gt;[Вже існує]&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="240" x="560" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="5" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#383d41;fontSize=11;" target="4" value="HTTP/REST (порт 5000)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="6" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#28a745;strokeWidth=2;fontSize=13;" value="&lt;b&gt;Поточний стан (Лабораторна робота ЛР0)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="350" width="400" x="60" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;fontSize=12;" value="&lt;b&gt;Monolith API&lt;/b&gt;&lt;br/&gt;порт 5100&lt;br/&gt;&lt;b&gt;[Вже існує]&lt;/b&gt;" vertex="1">
+          <mxGeometry height="65" width="220" x="150" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d4edda;strokeColor=#28a745;strokeWidth=2;fontSize=12;" value="&lt;b&gt;Спільна PostgreSQL DB&lt;/b&gt;&lt;br/&gt;&#39;EcommerceDb&#39;&lt;br/&gt;&lt;b&gt;[Вже існує]&lt;/b&gt;" vertex="1">
+          <mxGeometry height="85" width="160" x="180" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="9" edge="1" parent="1" source="7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#28a745;fontSize=11;" target="8" value="TCP 5432 / SQL (Npgsql)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="10" edge="1" parent="1" source="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#28a745;fontSize=11;" target="7" value="HTTP/REST: /api/* (порт 5100)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fffdf5;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=13;" value="&lt;b&gt;Цільові сервіси (Наступні лабораторні роботи)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="410" width="790" x="495" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=12;" value="&lt;b&gt;Auth / Identity Service&lt;/b&gt;&lt;br/&gt;порт 5101&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="65" width="210" x="35" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=12;" value="&lt;b&gt;Catalog &amp; Products Service&lt;/b&gt;&lt;br/&gt;порт 5102&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="65" width="220" x="285" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="14" parent="11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=12;" value="&lt;b&gt;Order Service&lt;/b&gt;&lt;br/&gt;порт 5103&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="65" width="210" x="545" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="15" parent="11" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=11;" value="&lt;b&gt;PostgreSQL&lt;/b&gt;&lt;br/&gt;&#39;AuthDb&#39;&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="80" width="150" x="65" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="11" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=11;" value="&lt;b&gt;PostgreSQL&lt;/b&gt;&lt;br/&gt;&#39;CatalogDb&#39;&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="80" width="150" x="320" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="11" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=11;" value="&lt;b&gt;PostgreSQL&lt;/b&gt;&lt;br/&gt;&#39;OrdersDb&#39;&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
+          <mxGeometry height="80" width="150" x="575" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="18" edge="1" parent="11" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="15" value="TCP 5432 / SQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="19" edge="1" parent="11" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="16" value="TCP 5432 / SQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="20" edge="1" parent="11" source="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="17" value="TCP 5432 / SQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" edge="1" parent="11" source="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#b25e00;fontSize=11;" target="13" value="HTTP/REST або gRPC&lt;br/&gt;(перевірка та списання залишків)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" edge="1" parent="1" source="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="12" value="HTTP/REST: /api/auth/*">
+          <mxGeometry relative="1" x="0.3779" y="-45" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="680" y="360" />
+              <mxPoint x="635" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="23" edge="1" parent="1" source="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="13" value="HTTP/REST: /api/categories/*, /api/products/*">
+          <mxGeometry relative="1" x="0.2306" y="-40" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="680" y="340" />
+              <mxPoint x="890" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="24" edge="1" parent="1" source="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="14" value="HTTP/REST: /api/orders/*">
+          <mxGeometry relative="1" x="0.6428" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="25" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;verticalAlign=top;align=left;spacingLeft=10;fillColor=#f8f9fa;strokeColor=#6c757d;fontSize=11;" value="&lt;b&gt;Легенда:&lt;/b&gt;&lt;br/&gt;🟢 &lt;b&gt;Зелені блоки (суцільні лінії):&lt;/b&gt; Поточний стан ЛР0 (Client → Gateway :5000 → Monolith :5100 → PostgreSQL)&lt;br/&gt;🟡 &lt;b&gt;Жовті блоки (пунктирні лінії):&lt;/b&gt; Цільові сервіси та незалежні БД (Auth, Catalog, Orders)&lt;br/&gt;➡️ &lt;b&gt;Стрілки:&lt;/b&gt; На кожній стрілці позначено протокол взаємодії та цільовий порт" vertex="1">
+          <mxGeometry height="120" width="400" x="60" y="690" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page-2" name="6.2.1. Послідовність - Моноліт (Зараз)">
+    <mxGraphModel dx="1400" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="&lt;b&gt;Діаграма послідовностей: Поточний стан (ЛР0) — Сценарій «Оформлення замовлення»&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;fontColor=#0969da;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="250" y="20" width="700" height="40" />
+        </mxCell>
+        <mxCell id="3" value="&lt;b&gt;Клієнт (Покупець)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#e2e3e5;strokeColor=#383d41;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="100" y="80" width="140" height="700" />
+        </mxCell>
+        <mxCell id="4" value="&lt;b&gt;ApiGateway (:5000)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d4edda;strokeColor=#28a745;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="360" y="80" width="160" height="700" />
+        </mxCell>
+        <mxCell id="5" value="&lt;b&gt;Monolith API (:5100)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d4edda;strokeColor=#28a745;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="640" y="80" width="160" height="700" />
+        </mxCell>
+        <mxCell id="6" value="&lt;b&gt;PostgreSQL (EcommerceDb)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d4edda;strokeColor=#28a745;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="920" y="80" width="180" height="700" />
+        </mxCell>
+        <mxCell id="7" value="1: POST /api/orders (Bearer JWT, items: [{productId, qty}])" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="160" as="sourcePoint" />
+            <mxPoint x="440" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8" value="Ocelot перехоплює запит,&lt;br/&gt;додає X-Correlation-Id,&lt;br/&gt;маршрутизує на порт 5100" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="380" y="180" width="170" height="50" />
+        </mxCell>
+        <mxCell id="9" value="2: POST /api/orders (Bearer JWT, X-Correlation-Id)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="245" as="sourcePoint" />
+            <mxPoint x="720" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" value="Валідація JWT токена (UserId, Role)&lt;br/&gt;та валідація DTO (FluentValidation)" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="660" y="265" width="200" height="45" />
+        </mxCell>
+        <mxCell id="11" value="3: SQL: BEGIN TRANSACTION (RepeatableRead)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="325" as="sourcePoint" />
+            <mxPoint x="1010" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="12" value="4: SQL: SELECT StockQuantity, Price FROM Products WHERE Id IN (...)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="365" as="sourcePoint" />
+            <mxPoint x="1010" y="365" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" value="5: SQL Result: залишки та ціни товарів" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="405" as="sourcePoint" />
+            <mxPoint x="720" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="14" value="Локальна перевірка: StockQuantity &gt;= qty&lt;br/&gt;Розрахунок TotalAmount у пам&#39;яті процесу" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="660" y="420" width="220" height="45" />
+        </mxCell>
+        <mxCell id="15" value="6: SQL: UPDATE Products SET StockQuantity = StockQuantity - @qty" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="485" as="sourcePoint" />
+            <mxPoint x="1010" y="485" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="7: SQL: INSERT INTO Orders (...), INSERT INTO OrderItems (...)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="525" as="sourcePoint" />
+            <mxPoint x="1010" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="17" value="8: SQL: COMMIT TRANSACTION" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="565" as="sourcePoint" />
+            <mxPoint x="1010" y="565" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="18" value="9: OK: Транзакцію зафіксовано" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="605" as="sourcePoint" />
+            <mxPoint x="720" y="605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="19" value="10: HTTP 201 Created (OrderResponse DTO)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="650" as="sourcePoint" />
+            <mxPoint x="440" y="650" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="20" value="11: HTTP 201 Created (OrderResponse DTO, X-Correlation-Id)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="690" as="sourcePoint" />
+            <mxPoint x="170" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="21" value="&lt;b&gt;Особливості поточної реалізації (ЛР0):&lt;/b&gt;&lt;br/&gt;• Єдина локальна SQL-транзакція (ACID)&lt;br/&gt;• Перевірка залишків і створення замовлення виконуються в межах одного процесу Monolith&lt;br/&gt;• Шлюз прозоро проксіює трафік та інжектує X-Correlation-Id для логування" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#28a745;fontSize=11;align=left;spacingLeft=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="100" y="720" width="1000" height="50" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page-3" name="6.2.2. Послідовність - Мікросервіси (Цільовий стан)">
+    <mxGraphModel dx="1500" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="&lt;b&gt;Діаграма послідовностей: Цільовий стан мікросервісів — Сценарій «Оформлення замовлення»&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;fontColor=#0969da;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="280" y="20" width="750" height="40" />
+        </mxCell>
+        <mxCell id="3" value="&lt;b&gt;Клієнт (Покупець)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#e2e3e5;strokeColor=#383d41;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="80" y="80" width="130" height="720" />
+        </mxCell>
+        <mxCell id="4" value="&lt;b&gt;ApiGateway (:5000)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d4edda;strokeColor=#28a745;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="270" y="80" width="150" height="720" />
+        </mxCell>
+        <mxCell id="5" value="&lt;b&gt;Order Service (:5103)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff3cd;strokeColor=#ffc107;dashed=1;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="480" y="80" width="160" height="720" />
+        </mxCell>
+        <mxCell id="6" value="&lt;b&gt;Catalog Service (:5102)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff3cd;strokeColor=#ffc107;dashed=1;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="720" y="80" width="170" height="720" />
+        </mxCell>
+        <mxCell id="7" value="&lt;b&gt;CatalogDb (PostgreSQL)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff3cd;strokeColor=#ffc107;dashed=1;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="960" y="80" width="160" height="720" />
+        </mxCell>
+        <mxCell id="8" value="&lt;b&gt;OrdersDb (PostgreSQL)&lt;/b&gt;" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#fff3cd;strokeColor=#ffc107;dashed=1;size=40;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="1170" y="80" width="150" height="720" />
+        </mxCell>
+        <mxCell id="9" value="1: POST /api/orders (Bearer JWT, items: [{productId, qty}])" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="145" y="150" as="sourcePoint" />
+            <mxPoint x="345" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" value="Шлюз валідує JWT токен на межі системи.&lt;br/&gt;Інжектує X-User-Id, X-User-Role, X-Correlation-Id.&lt;br/&gt;Маршрутизує на Order Service (:5103)" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#e7f5ff;strokeColor=#1971c2;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="290" y="170" width="230" height="55" />
+        </mxCell>
+        <mxCell id="11" value="2: POST /api/orders (Headers: X-User-Id, X-Correlation-Id, Payload)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="345" y="245" as="sourcePoint" />
+            <mxPoint x="560" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="12" value="Отримує ідентифікатор користувача з заголовка.&lt;br/&gt;Валідує структуру замовлення" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="500" y="260" width="210" height="40" />
+        </mxCell>
+        <mxCell id="13" value="&lt;b&gt;[МЕРЕЖЕВИЙ ВИКЛИК] Міжсервісна взаємодія (Order Service → Catalog Service)&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ebf5ff;strokeColor=#1971c2;dashed=1;strokeWidth=2;align=left;verticalAlign=top;fontSize=11;fontColor=#1864ab;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="520" y="315" width="560" height="200" />
+        </mxCell>
+        <mxCell id="14" value="3: [HTTP/gRPC] POST /api/products/reserve (ReserveStockRequest {items})" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="355" as="sourcePoint" />
+            <mxPoint x="805" y="355" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="15" value="4: SQL: UPDATE Products SET StockQuantity = StockQuantity - @qty WHERE Id = @id AND StockQuantity &gt;= @qty" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="805" y="395" as="sourcePoint" />
+            <mxPoint x="1040" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="5: SQL Result: 1 рядок змінено (OK)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1040" y="435" as="sourcePoint" />
+            <mxPoint x="805" y="435" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="17" value="6: HTTP 200 OK (ReservationSuccess: true, UnitPrices: [...])" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="805" y="475" as="sourcePoint" />
+            <mxPoint x="560" y="475" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="18" value="Збереження знімка даних (Snapshotting):&lt;br/&gt;фіксація назви та ціни товару на момент купівлі" style="shape=note;whiteSpace=wrap;html=1;size=12;verticalAlign=top;align=left;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="580" y="525" width="230" height="40" />
+        </mxCell>
+        <mxCell id="19" value="7: SQL: INSERT INTO Orders (Id, UserId, TotalAmount), INSERT INTO OrderItems (..., ProductName, UnitPrice)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0969da;strokeWidth=2;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="580" as="sourcePoint" />
+            <mxPoint x="1245" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="20" value="8: OK (Замовлення збережено)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1245" y="620" as="sourcePoint" />
+            <mxPoint x="560" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="21" value="9: HTTP 201 Created (OrderResponse DTO)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="665" as="sourcePoint" />
+            <mxPoint x="345" y="665" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="22" value="10: HTTP 201 Created (OrderResponse DTO, X-Correlation-Id)" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#57606a;fontSize=11;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="345" y="705" as="sourcePoint" />
+            <mxPoint x="145" y="705" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="23" value="&lt;b&gt;Висновки з декомпозиції:&lt;/b&gt;&lt;br/&gt;• Внутрішній виклик моноліту став &lt;b&gt;міжсервісним мережевим викликом&lt;/b&gt; (HTTP/gRPC) з ризиком таймаутів&lt;br/&gt;• Валідація JWT токена перенесена на периметр шлюзу (ApiGateway)&lt;br/&gt;• Відсутня спільна SQL-транзакція: вимагається патерн Saga для компенсації у разі збою та Data Snapshotting для OrderItems" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffdf5;strokeColor=#ffc107;fontSize=11;align=left;spacingLeft=10;" parent="1" vertex="1">
+          <mxGeometry as="geometry" x="80" y="745" width="1240" height="50" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
