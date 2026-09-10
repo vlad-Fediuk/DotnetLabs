@@ -32,7 +32,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="11" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fffdf5;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=13;" value="&lt;b&gt;Цільові сервіси (Наступні лабораторні роботи)&lt;/b&gt;" vertex="1">
-          <mxGeometry height="410" width="790" x="495" y="290" as="geometry" />
+          <mxGeometry height="410" width="790" x="480" y="170" as="geometry" />
         </mxCell>
         <mxCell id="12" parent="11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffc107;strokeWidth=2;dashed=1;fontSize=12;" value="&lt;b&gt;Auth / Identity Service&lt;/b&gt;&lt;br/&gt;порт 5101&lt;br/&gt;&lt;i&gt;[З&#39;явиться згодом]&lt;/i&gt;" vertex="1">
           <mxGeometry height="65" width="210" x="35" y="160" as="geometry" />
@@ -62,7 +62,9 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="21" edge="1" parent="11" source="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#b25e00;fontSize=11;" target="13" value="HTTP/REST або gRPC&lt;br/&gt;(перевірка та списання залишків)">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" x="0.5" y="38" as="geometry">
+            <mxPoint y="-1" as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="22" edge="1" parent="1" source="4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;dashed=1;strokeColor=#d4a017;fontSize=11;" target="12" value="HTTP/REST: /api/auth/*">
           <mxGeometry relative="1" x="0.3779" y="-45" as="geometry">
