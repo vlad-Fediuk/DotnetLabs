@@ -17,8 +17,6 @@ var app = builder.Build();
 
 app.UseCors();
 
-var monolithDest = $"http://{builder.Configuration["Monolith:Host"] ?? "localhost"}:{builder.Configuration["Monolith:Port"] ?? "5100"}";
-
 app.Use(async (context, next) =>
 {
     var correlationId = context.Request.Headers["X-Correlation-Id"].FirstOrDefault() ?? Guid.NewGuid().ToString();
@@ -29,7 +27,12 @@ app.Use(async (context, next) =>
     await next();
     sw.Stop();
 
-    var dest = context.Request.Path.StartsWithSegments("/health") ? "Internal (/health)" : monolithDest;
+    var path = context.Request.Path.Value ?? string.Empty;
+    var dest = path.StartsWith("/health") ? "Internal (/health)" :
+               path.StartsWith("/api/v1/auth") || path.StartsWith("/api/v1/users") ? "AuthService (localhost:5001)" :
+               path.StartsWith("/api/v1/catalog") ? "CatalogService (localhost:5002)" :
+               "Monolith (localhost:5100)";
+
     var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
     logger.LogInformation("[{CorrelationId}] {Method} {Path} -> {Destination} -> {StatusCode} ({ElapsedMs} ms)",
         correlationId, context.Request.Method, context.Request.Path, dest, context.Response.StatusCode, sw.ElapsedMilliseconds);

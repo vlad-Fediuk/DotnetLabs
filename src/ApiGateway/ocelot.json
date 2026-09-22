@@ -1,15 +1,15 @@
 {
   "Routes": [
     {
-      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamPathTemplate": "/api/v1/auth/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 5100
+          "Port": 5001
         }
       ],
-      "UpstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamPathTemplate": "/api/v1/auth/{everything}",
       "UpstreamHttpMethod": [
         "Get",
         "Post",
@@ -20,15 +20,34 @@
       ]
     },
     {
-      "DownstreamPathTemplate": "/api/categories/{everything}",
+      "DownstreamPathTemplate": "/api/v1/users/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 5100
+          "Port": 5001
         }
       ],
-      "UpstreamPathTemplate": "/api/categories/{everything}",
+      "UpstreamPathTemplate": "/api/v1/users/{everything}",
+      "UpstreamHttpMethod": [
+        "Get",
+        "Post",
+        "Put",
+        "Delete",
+        "Patch",
+        "Options"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/catalog/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/v1/catalog/{everything}",
       "UpstreamHttpMethod": [
         "Get",
         "Post",
@@ -55,6 +74,34 @@
         "Delete",
         "Patch",
         "Options"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/swagger/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/swagger/auth/{everything}",
+      "UpstreamHttpMethod": [
+        "Get"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/swagger/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/swagger/catalog/{everything}",
+      "UpstreamHttpMethod": [
+        "Get"
       ]
     },
     {
