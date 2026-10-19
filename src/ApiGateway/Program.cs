@@ -5,6 +5,7 @@ using Ocelot.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 builder.Services.AddCors(options =>
 {
@@ -31,6 +32,7 @@ app.Use(async (context, next) =>
     var dest = path.StartsWith("/health") ? "Internal (/health)" :
                path.StartsWith("/api/v1/auth") || path.StartsWith("/api/v1/users") ? "AuthService (localhost:5001)" :
                path.StartsWith("/api/v1/catalog") ? "CatalogService (localhost:5002)" :
+               path.StartsWith("/api/orders") ? "OrderingService (localhost:5003)" :
                "Monolith (localhost:5100)";
 
     var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();

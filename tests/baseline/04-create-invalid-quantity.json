@@ -1,0 +1,1 @@
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Items[0].Quantity":["Количество товара должно быть больше 0"]},"traceId":"00-a92696a8d97fe21bde00f0de36aedfe4-69f990eaf56907eb-00"}

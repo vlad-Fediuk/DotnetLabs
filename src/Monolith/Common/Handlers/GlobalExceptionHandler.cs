@@ -27,6 +27,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             BadRequestException => (StatusCodes.Status400BadRequest, "Некорректный запрос"),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Ошибка авторизации"),
             FluentValidation.ValidationException => (StatusCodes.Status400BadRequest, "Ошибка валидации"),
+            ServiceUnavailableException => (StatusCodes.Status503ServiceUnavailable, "Сервис временно недоступен"),
             _ => (StatusCodes.Status500InternalServerError, "Внутренняя ошибка сервера")
         };
 
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler : IExceptionHandler
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
+        }
+
+        if (exception is ServiceUnavailableException unavailableException)
+        {
+            httpContext.Response.Headers.RetryAfter = unavailableException.RetryAfterSeconds.ToString();
         }
 
         httpContext.Response.StatusCode = statusCode;
