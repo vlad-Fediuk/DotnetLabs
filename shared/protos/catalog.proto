@@ -8,6 +8,8 @@ service CatalogGrpcService {
   rpc GetItem (GetItemRequest) returns (CatalogItemResponse);
   rpc GetItems (GetItemsRequest) returns (CatalogItemsResponse);
   rpc CheckStock (CheckStockRequest) returns (CheckStockResponse);
+  rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseStock (ReleaseStockRequest) returns (ReleaseStockResponse);
 }
 
 message GetItemRequest {
@@ -40,4 +42,28 @@ message CheckStockRequest {
 message CheckStockResponse {
   bool is_available = 1;
   int32 available_quantity = 2;
+}
+
+message StockItemQuantity {
+  string item_id = 1;
+  int32 quantity = 2;
+}
+
+message ReserveStockRequest {
+  repeated StockItemQuantity items = 1;
+}
+
+message ReserveStockResponse {
+  bool success = 1;
+  string error_message = 2;
+  string failed_item_id = 3;
+  int32 available_quantity = 4;
+}
+
+message ReleaseStockRequest {
+  repeated StockItemQuantity items = 1;
+}
+
+message ReleaseStockResponse {
+  bool success = 1;
 }
