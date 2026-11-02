@@ -119,9 +119,9 @@ export function CatalogPage() {
     });
   };
 
-  const categories = categoriesQuery.data ?? [];
+  const categories = Array.isArray(categoriesQuery.data) ? categoriesQuery.data : [];
   const pagedData = itemsQuery.data;
-  const items = pagedData?.items ?? [];
+  const items = Array.isArray(pagedData?.items) ? pagedData.items : [];
   const hasActiveFilters =
     Boolean(debouncedSearch) ||
     Boolean(selectedCategory) ||

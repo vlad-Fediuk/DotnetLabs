@@ -46,7 +46,7 @@ export function OrdersOperatorTab() {
     onError: (err) => toast.error(extractApiErrorMessage(err)),
   });
 
-  const orders = allOrdersQuery.data ?? [];
+  const orders = Array.isArray(allOrdersQuery.data) ? allOrdersQuery.data : [];
 
   return (
     <Card className="p-6 space-y-5">

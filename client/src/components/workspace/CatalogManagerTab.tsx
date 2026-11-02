@@ -52,8 +52,8 @@ export function CatalogManagerTab() {
     queryFn: () => catalogApi.getItems({ page: 1, pageSize: 50, sortBy: 'created', desc: true }),
   });
 
-  const categories = categoriesQuery.data ?? [];
-  const items = itemsQuery.data?.items ?? [];
+  const categories = Array.isArray(categoriesQuery.data) ? categoriesQuery.data : [];
+  const items = Array.isArray(itemsQuery.data?.items) ? itemsQuery.data.items : [];
 
   const openCreateItem = () => {
     setEditingItem(null);

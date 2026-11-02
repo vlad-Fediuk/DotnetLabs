@@ -63,7 +63,7 @@ export function OrdersPage() {
     },
   });
 
-  const orders = ordersQuery.data ?? [];
+  const orders = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
 
   return (
     <div className="space-y-6">

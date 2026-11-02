@@ -98,7 +98,7 @@ export const catalogApi = {
 
   async getCategories(): Promise<CategoryDto[]> {
     const { data } = await httpClient.get<CategoryDto[]>('/api/v1/catalog/categories');
-    return data;
+    return Array.isArray(data) ? data : [];
   },
 
   async createCategory(payload: CreateCategoryRequest): Promise<CategoryDto> {
@@ -149,7 +149,7 @@ export const ordersApi = {
     const { data } = await httpClient.get<OrderResponse[]>('/api/orders', {
       params,
     });
-    return data;
+    return Array.isArray(data) ? data : [];
   },
 
   async getAllOrders(params?: {
@@ -161,7 +161,7 @@ export const ordersApi = {
     const { data } = await httpClient.get<OrderResponse[]>('/api/orders/all', {
       params,
     });
-    return data;
+    return Array.isArray(data) ? data : [];
   },
 
   async getOrderById(id: string): Promise<OrderResponse> {
