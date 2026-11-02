@@ -5,6 +5,7 @@ public record UserDto(
     string Email,
     string DisplayName,
     IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions,
     DateTime CreatedAtUtc,
     bool IsActive
 );

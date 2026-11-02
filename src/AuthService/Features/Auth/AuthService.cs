@@ -1,10 +1,11 @@
-using Microsoft.Extensions.Logging;
 using AuthService.Data;
 using AuthService.Features.Auth.DTOs;
 using AuthService.Features.Users;
 using AuthService.Features.Users.DTOs;
 using AuthService.Models;
 using ECommerce.Shared.Exceptions;
+using ECommerce.Shared.Security;
+using Microsoft.Extensions.Logging;
 
 namespace AuthService.Features.Auth;
 
@@ -40,10 +41,10 @@ public class AuthService : IAuthService
             throw new ConflictException($"User with email '{request.Email}' already exists.");
         }
 
-        var defaultRole = (await _roleRepository.FindAsync(r => r.Name == "User", ct)).FirstOrDefault();
+        var defaultRole = (await _roleRepository.FindAsync(r => r.Name == RoleNames.User, ct)).FirstOrDefault();
         if (defaultRole == null)
         {
-            defaultRole = new Role { Id = 1, Name = "User" };
+            defaultRole = new Role { Name = RoleNames.User };
             await _roleRepository.AddAsync(defaultRole, ct);
             await _roleRepository.SaveChangesAsync(ct);
         }
@@ -63,7 +64,8 @@ public class AuthService : IAuthService
         user.UserRoles.Add(new UserRole
         {
             UserId = user.Id,
-            RoleId = defaultRole.Id
+            RoleId = defaultRole.Id,
+            Role = defaultRole
         });
 
         await _userRepository.AddAsync(user, ct);
@@ -87,11 +89,15 @@ public class AuthService : IAuthService
         await _refreshTokenRepository.AddAsync(refreshToken, ct);
         await _refreshTokenRepository.SaveChangesAsync(ct);
 
+        var roles = new[] { defaultRole.Name };
+        var permissions = RolePermissions.GetPermissionsForRoles(roles);
+
         var userDto = new UserDto(
             user.Id,
             user.Email,
             user.DisplayName,
-            new[] { defaultRole.Name },
+            roles,
+            permissions,
             user.CreatedAtUtc,
             user.IsActive
         );
@@ -134,11 +140,15 @@ public class AuthService : IAuthService
         await _refreshTokenRepository.AddAsync(refreshToken, ct);
         await _refreshTokenRepository.SaveChangesAsync(ct);
 
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+        var permissions = RolePermissions.GetPermissionsForRoles(roles);
+
         var userDto = new UserDto(
             user.Id,
             user.Email,
             user.DisplayName,
-            user.UserRoles.Select(ur => ur.Role.Name).ToList(),
+            roles,
+            permissions,
             user.CreatedAtUtc,
             user.IsActive
         );
@@ -183,11 +193,15 @@ public class AuthService : IAuthService
 
         var (accessToken, expiresAt) = _tokenService.GenerateAccessToken(user);
 
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+        var permissions = RolePermissions.GetPermissionsForRoles(roles);
+
         var userDto = new UserDto(
             user.Id,
             user.Email,
             user.DisplayName,
-            user.UserRoles.Select(ur => ur.Role.Name).ToList(),
+            roles,
+            permissions,
             user.CreatedAtUtc,
             user.IsActive
         );
