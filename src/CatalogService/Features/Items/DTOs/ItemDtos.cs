@@ -37,6 +37,8 @@ public record CatalogFilterParams
     public int? PageSize { get; init; } = 10;
     public string? Search { get; init; }
     public Guid? CategoryId { get; init; }
+    public decimal? MinPrice { get; init; }
+    public decimal? MaxPrice { get; init; }
     public string? SortBy { get; init; }
     public bool? Desc { get; init; } = false;
 }

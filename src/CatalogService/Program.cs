@@ -1,29 +1,33 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
 using CatalogService.Data;
 using CatalogService.Features.Categories;
 using CatalogService.Features.Items;
+using ECommerce.Shared.Filters;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Security;
+using FluentValidation;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var restPort = builder.Configuration.GetValue("Kestrel:RestPort", 5002);
-var grpcPort = builder.Configuration.GetValue("Kestrel:GrpcPort", 5102);
-
-builder.WebHost.ConfigureKestrel(kestrel =>
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    kestrel.ListenAnyIP(restPort, o => o.Protocols = HttpProtocols.Http1AndHttp2);
-    kestrel.ListenAnyIP(grpcPort, o => o.Protocols = HttpProtocols.Http2);
-});
+    var restPort = builder.Configuration.GetValue("Kestrel:RestPort", 5002);
+    var grpcPort = builder.Configuration.GetValue("Kestrel:GrpcPort", 5102);
+
+    builder.WebHost.ConfigureKestrel(kestrel =>
+    {
+        kestrel.ListenAnyIP(restPort, o => o.Protocols = HttpProtocols.Http1AndHttp2);
+        kestrel.ListenAnyIP(grpcPort, o => o.Protocols = HttpProtocols.Http2);
+    });
+}
 
 builder.Services.AddGrpc();
 
-builder.Services.AddDbContext<CatalogDbContext>(options =>
+builder.Services.AddDbContext<CatalogDbContext>((sp, options) =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    var connectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     options.UseNpgsql(connectionString);
 });
@@ -33,6 +37,11 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICatalogService, CatalogService.Features.Items.CatalogService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationActionFilter>();
+});
 
 builder.Services.AddJwtAuth(builder.Configuration);
 
@@ -70,10 +79,18 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
 }
 
 app.UseExceptionHandler();
@@ -85,11 +102,9 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseJwtAuth();
 
-app.MapItemEndpoints();
-app.MapCategoryEndpoints();
+app.MapControllers();
 app.MapGrpcService<CatalogGrpcServiceImpl>();
 
 app.MapGet("/health", async (CatalogDbContext db) =>
@@ -106,10 +121,12 @@ app.MapGet("/health", async (CatalogDbContext db) =>
         return Results.Json(new { service = "CatalogService", status = "Unhealthy", error = ex.Message }, statusCode: 503);
     }
 })
+.AllowAnonymous()
 .WithName("HealthCheck")
-.WithTags("Health")
-.WithSummary("Check service and database health");
+.WithTags("Health");
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.Run();
+
+public partial class Program;

@@ -51,6 +51,75 @@ public class CatalogGrpcServiceImpl : CatalogGrpcService.CatalogGrpcServiceBase
         };
     }
 
+    public override async Task<ReserveStockResponse> ReserveStock(ReserveStockRequest request, ServerCallContext context)
+    {
+        var aggregated = request.Items
+            .GroupBy(i => ParseId(i.ItemId))
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+
+        var itemIds = aggregated.Keys.ToList();
+        var items = await _repository.FindAsync(i => itemIds.Contains(i.Id), context.CancellationToken);
+        var itemsById = items.ToDictionary(i => i.Id);
+
+        foreach (var (itemId, quantity) in aggregated)
+        {
+            if (quantity <= 0)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Quantity must be greater than zero."));
+            }
+
+            if (!itemsById.TryGetValue(itemId, out var item) || !item.IsActive)
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, $"Item '{itemId}' was not found."));
+            }
+
+            if (item.StockQuantity < quantity)
+            {
+                return new ReserveStockResponse
+                {
+                    Success = false,
+                    FailedItemId = item.Id.ToString(),
+                    AvailableQuantity = item.StockQuantity,
+                    ErrorMessage = $"Недостатньо товару '{item.Title}' на складі. Доступно: {item.StockQuantity}, запитано: {quantity}."
+                };
+            }
+        }
+
+        foreach (var (itemId, quantity) in aggregated)
+        {
+            var item = itemsById[itemId];
+            item.StockQuantity -= quantity;
+            _repository.Update(item);
+        }
+
+        await _repository.SaveChangesAsync(context.CancellationToken);
+
+        return new ReserveStockResponse { Success = true };
+    }
+
+    public override async Task<ReleaseStockResponse> ReleaseStock(ReleaseStockRequest request, ServerCallContext context)
+    {
+        var aggregated = request.Items
+            .GroupBy(i => ParseId(i.ItemId))
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+
+        var itemIds = aggregated.Keys.ToList();
+        var items = await _repository.FindAsync(i => itemIds.Contains(i.Id), context.CancellationToken);
+
+        foreach (var item in items)
+        {
+            if (aggregated.TryGetValue(item.Id, out var quantity) && quantity > 0)
+            {
+                item.StockQuantity += quantity;
+                _repository.Update(item);
+            }
+        }
+
+        await _repository.SaveChangesAsync(context.CancellationToken);
+
+        return new ReleaseStockResponse { Success = true };
+    }
+
     private static Guid ParseId(string value)
     {
         if (!Guid.TryParse(value, out var id))

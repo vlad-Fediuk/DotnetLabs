@@ -1,10 +1,10 @@
-using Microsoft.Extensions.Logging;
 using CatalogService.Features.Categories;
 using CatalogService.Features.Categories.DTOs;
 using CatalogService.Features.Items.DTOs;
 using CatalogService.Models;
 using ECommerce.Shared.Common;
 using ECommerce.Shared.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace CatalogService.Features.Items;
 
@@ -131,7 +131,90 @@ public class CatalogService : ICatalogService
     public async Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync(CancellationToken ct = default)
     {
         var categories = await _categoryRepository.GetAllAsync(ct);
-        return categories.Select(c => new CategoryDto(c.Id, c.Name, c.Slug, c.Description)).ToList();
+        return categories.Select(MapCategoryToDto).ToList();
+    }
+
+    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var category = await _categoryRepository.GetByIdAsync(id, ct);
+        if (category == null)
+        {
+            throw new NotFoundException($"Category with ID '{id}' was not found.");
+        }
+
+        return MapCategoryToDto(category);
+    }
+
+    public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct = default)
+    {
+        var slug = request.Slug.Trim().ToLowerInvariant();
+        if (await _categoryRepository.ExistsSlugAsync(slug, null, ct))
+        {
+            throw new ConflictException($"Category with slug '{slug}' already exists.");
+        }
+
+        var category = new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            Slug = slug,
+            Description = request.Description?.Trim()
+        };
+
+        await _categoryRepository.AddAsync(category, ct);
+        await _categoryRepository.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Category created with ID {CategoryId} and Slug {Slug}", category.Id, category.Slug);
+
+        return MapCategoryToDto(category);
+    }
+
+    public async Task UpdateCategoryAsync(Guid id, UpdateCategoryRequest request, CancellationToken ct = default)
+    {
+        var category = await _categoryRepository.GetByIdAsync(id, ct);
+        if (category == null)
+        {
+            throw new NotFoundException($"Category with ID '{id}' was not found.");
+        }
+
+        var slug = request.Slug.Trim().ToLowerInvariant();
+        if (await _categoryRepository.ExistsSlugAsync(slug, id, ct))
+        {
+            throw new ConflictException($"Category with slug '{slug}' already exists.");
+        }
+
+        category.Name = request.Name.Trim();
+        category.Slug = slug;
+        category.Description = request.Description?.Trim();
+
+        _categoryRepository.Update(category);
+        await _categoryRepository.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Category updated: {CategoryId}", id);
+    }
+
+    public async Task DeleteCategoryAsync(Guid id, CancellationToken ct = default)
+    {
+        var category = await _categoryRepository.GetByIdAsync(id, ct);
+        if (category == null)
+        {
+            throw new NotFoundException($"Category with ID '{id}' was not found.");
+        }
+
+        if (await _categoryRepository.HasItemsAsync(id, ct))
+        {
+            throw new ConflictException($"Cannot delete category '{category.Name}' because it still contains active items.");
+        }
+
+        _categoryRepository.Remove(category);
+        await _categoryRepository.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Category deleted: {CategoryId}", id);
+    }
+
+    private static CategoryDto MapCategoryToDto(Category category)
+    {
+        return new CategoryDto(category.Id, category.Name, category.Slug, category.Description);
     }
 
     private static ItemDto MapToDto(Item item)

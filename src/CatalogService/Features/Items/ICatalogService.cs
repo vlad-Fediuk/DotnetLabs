@@ -12,4 +12,8 @@ public interface ICatalogService
     Task UpdateItemAsync(Guid id, UpdateItemRequest request, CancellationToken ct = default);
     Task DeleteItemAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync(CancellationToken ct = default);
+    Task<CategoryDto> GetCategoryByIdAsync(Guid id, CancellationToken ct = default);
+    Task<CategoryDto> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct = default);
+    Task UpdateCategoryAsync(Guid id, UpdateCategoryRequest request, CancellationToken ct = default);
+    Task DeleteCategoryAsync(Guid id, CancellationToken ct = default);
 }
