@@ -3,7 +3,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { generateUuidV4 } from '@/lib/utils';
 import type { AuthResponse, ProblemDetails } from '@/types/api';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || '';
+const rawBaseURL = import.meta.env.VITE_API_BASE_URL || '';
+const baseURL = rawBaseURL.replace(/\/+$/, '');
 
 export const httpClient = axios.create({
   baseURL,
