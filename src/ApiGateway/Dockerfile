@@ -1,9 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
+COPY src/Shared/ECommerce.Shared.csproj src/Shared/
+COPY shared/protos/ shared/protos/
 COPY src/ApiGateway/ApiGateway.csproj src/ApiGateway/
 RUN dotnet restore src/ApiGateway/ApiGateway.csproj
 
+COPY src/Shared/ src/Shared/
 COPY src/ApiGateway/ src/ApiGateway/
 RUN dotnet publish src/ApiGateway/ApiGateway.csproj -c Release -o /app/publish /p:UseAppHost=false
 

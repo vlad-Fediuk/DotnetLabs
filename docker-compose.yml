@@ -24,8 +24,8 @@ services:
       context: .
       dockerfile: src/AuthService/Dockerfile
     restart: unless-stopped
-    ports:
-      - "5001:5001"
+    expose:
+      - "5001"
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceAuthDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
@@ -42,9 +42,9 @@ services:
       context: .
       dockerfile: src/CatalogService/Dockerfile
     restart: unless-stopped
-    ports:
-      - "5002:5002"
-      - "5102:5102"
+    expose:
+      - "5002"
+      - "5102"
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceCatalogDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
@@ -63,8 +63,8 @@ services:
       context: .
       dockerfile: src/OrderingService/Dockerfile
     restart: unless-stopped
-    ports:
-      - "5003:5003"
+    expose:
+      - "5003"
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:5003
@@ -72,27 +72,6 @@ services:
       LegacyImport__ConnectionString: Host=postgres;Port=5432;Database=EcommerceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
       Services__CatalogGrpc: http://catalog-service:5102
       Jwt__Key: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
-      Jwt__Issuer: ECommerceApi
-      Jwt__Audience: ECommerceApi
-    depends_on:
-      postgres:
-        condition: service_healthy
-      catalog-service:
-        condition: service_started
-
-  monolith:
-    container_name: ecommerce-monolith
-    build:
-      context: .
-      dockerfile: src/Monolith/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "5100:5100"
-    environment:
-      ASPNETCORE_ENVIRONMENT: Docker
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
-      Services__CatalogGrpc: http://catalog-service:5102
-      Jwt__SecretKey: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
       Jwt__Issuer: ECommerceApi
       Jwt__Audience: ECommerceApi
     depends_on:
@@ -111,14 +90,18 @@ services:
       - "5000:5000"
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
+      Jwt__Key: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
+      Jwt__Issuer: ECommerceApi
+      Jwt__Audience: ECommerceApi
+      Services__Auth: http://auth-service:5001
+      Services__Catalog: http://catalog-service:5002
+      Services__Ordering: http://ordering-service:5003
     depends_on:
       auth-service:
         condition: service_started
       catalog-service:
         condition: service_started
       ordering-service:
-        condition: service_started
-      monolith:
         condition: service_started
 
 volumes:

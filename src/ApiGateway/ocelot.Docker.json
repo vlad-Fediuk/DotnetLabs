@@ -1,6 +1,26 @@
 {
   "Routes": [
     {
+      "DownstreamPathTemplate": "/api/v1/auth/logout",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-service",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/v1/auth/logout",
+      "UpstreamHttpMethod": [
+        "Post",
+        "Options"
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "Priority": 2
+    },
+    {
       "DownstreamPathTemplate": "/api/v1/auth/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -17,7 +37,27 @@
         "Delete",
         "Patch",
         "Options"
-      ]
+      ],
+      "Priority": 1
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/users",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-service",
+          "Port": 5001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/v1/users",
+      "UpstreamHttpMethod": [
+        "Get",
+        "Options"
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "DownstreamPathTemplate": "/api/v1/users/{everything}",
@@ -36,7 +76,11 @@
         "Delete",
         "Patch",
         "Options"
-      ]
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "DownstreamPathTemplate": "/api/v1/catalog/{everything}",
@@ -50,12 +94,29 @@
       "UpstreamPathTemplate": "/api/v1/catalog/{everything}",
       "UpstreamHttpMethod": [
         "Get",
+        "Options"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/catalog/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "catalog-service",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/v1/catalog/{everything}",
+      "UpstreamHttpMethod": [
         "Post",
         "Put",
         "Delete",
-        "Patch",
-        "Options"
-      ]
+        "Patch"
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "DownstreamPathTemplate": "/api/orders",
@@ -74,7 +135,11 @@
         "Delete",
         "Patch",
         "Options"
-      ]
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "DownstreamPathTemplate": "/api/orders/{everything}",
@@ -93,26 +158,11 @@
         "Delete",
         "Patch",
         "Options"
-      ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "monolith",
-          "Port": 5100
-        }
       ],
-      "UpstreamPathTemplate": "/api/{everything}",
-      "UpstreamHttpMethod": [
-        "Get",
-        "Post",
-        "Put",
-        "Delete",
-        "Patch",
-        "Options"
-      ]
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "DownstreamPathTemplate": "/swagger/{everything}",
@@ -152,20 +202,6 @@
         }
       ],
       "UpstreamPathTemplate": "/swagger/orders/{everything}",
-      "UpstreamHttpMethod": [
-        "Get"
-      ]
-    },
-    {
-      "DownstreamPathTemplate": "/swagger/{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "monolith",
-          "Port": 5100
-        }
-      ],
-      "UpstreamPathTemplate": "/swagger/{everything}",
       "UpstreamHttpMethod": [
         "Get"
       ]
