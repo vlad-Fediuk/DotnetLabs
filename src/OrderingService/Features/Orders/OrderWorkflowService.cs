@@ -46,14 +46,16 @@ public class OrderWorkflowService : IOrderingService
         {
             if (!catalogItems.TryGetValue(item.ProductId, out var catalogItem) || !catalogItem.IsActive)
             {
-                throw new NotFoundException($"Товар с Id '{item.ProductId}' не найден.");
+                throw new NotFoundException($"Товар з Id '{item.ProductId}' не знайдено.");
             }
 
             if (catalogItem.StockQuantity < item.Quantity)
             {
-                throw new ConflictException($"Недостаточно товара '{catalogItem.Title}' на складе. Доступно: {catalogItem.StockQuantity}, запрошено: {item.Quantity}.");
+                throw new ConflictException($"Недостатньо товару '{catalogItem.Title}' на складі. Доступно: {catalogItem.StockQuantity}, запитано: {item.Quantity}.");
             }
         }
+
+        await _catalog.ReserveStockAsync(aggregatedItems, cancellationToken);
 
         var order = new Order
         {
@@ -101,6 +103,7 @@ public class OrderWorkflowService : IOrderingService
         }
         catch (DbUpdateException) when (scopedKey is not null)
         {
+            await _catalog.ReleaseStockAsync(aggregatedItems, cancellationToken);
             _dbContext.ChangeTracker.Clear();
             var concurrentlyCreated = await TryReplayAsync(scopedKey, cancellationToken);
             if (concurrentlyCreated is null)
@@ -116,15 +119,7 @@ public class OrderWorkflowService : IOrderingService
 
     public async Task<IReadOnlyList<OrderResponse>> GetUserOrdersAsync(Guid userId, OrderStatus? status, int? page, int? pageSize, CancellationToken cancellationToken = default)
     {
-        if (page is < 1)
-        {
-            throw new BadRequestException("Номер страницы должен быть больше 0.");
-        }
-
-        if (pageSize is < 1 or > MaxPageSize)
-        {
-            throw new BadRequestException($"Размер страницы должен быть в диапазоне от 1 до {MaxPageSize}.");
-        }
+        ValidatePaging(page, pageSize);
 
         var query = _dbContext.Orders
             .AsNoTracking()
@@ -136,25 +131,39 @@ public class OrderWorkflowService : IOrderingService
             query = query.Where(o => o.Status == status);
         }
 
-        var ordered = query.OrderByDescending(o => o.CreatedAtUtc);
-
-        var paged = pageSize is null
-            ? ordered
-            : ordered.Skip(((page ?? 1) - 1) * pageSize.Value).Take(pageSize.Value);
-
-        var orders = await paged.ToListAsync(cancellationToken);
-
-        return orders.Select(MapToResponse).ToList();
+        return await ExecutePagedQueryAsync(query, page, pageSize, cancellationToken);
     }
 
-    public async Task<OrderResponse> GetOrderByIdAsync(Guid orderId, Guid userId, bool isAdmin, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrderResponse>> GetAllOrdersAsync(OrderStatus? status, Guid? userId, int? page, int? pageSize, CancellationToken cancellationToken = default)
+    {
+        ValidatePaging(page, pageSize);
+
+        var query = _dbContext.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .AsQueryable();
+
+        if (userId is not null && userId != Guid.Empty)
+        {
+            query = query.Where(o => o.UserId == userId.Value);
+        }
+
+        if (status is not null)
+        {
+            query = query.Where(o => o.Status == status);
+        }
+
+        return await ExecutePagedQueryAsync(query, page, pageSize, cancellationToken);
+    }
+
+    public async Task<OrderResponse> GetOrderByIdAsync(Guid orderId, Guid userId, bool canViewAll, CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Orders
             .AsNoTracking()
             .Include(o => o.Items)
             .Where(o => o.Id == orderId);
 
-        if (!isAdmin)
+        if (!canViewAll)
         {
             query = query.Where(o => o.UserId == userId);
         }
@@ -162,19 +171,19 @@ public class OrderWorkflowService : IOrderingService
         var order = await query.FirstOrDefaultAsync(cancellationToken);
         if (order is null)
         {
-            throw new NotFoundException($"Заказ с Id '{orderId}' не найден.");
+            throw new NotFoundException($"Замовлення з Id '{orderId}' не знайдено.");
         }
 
         return MapToResponse(order);
     }
 
-    public async Task<OrderResponse> CancelOrderAsync(Guid orderId, Guid userId, bool isAdmin, CancellationToken cancellationToken = default)
+    public async Task<OrderResponse> CancelOrderAsync(Guid orderId, Guid userId, bool canManageStatus, CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Orders
             .Include(o => o.Items)
             .Where(o => o.Id == orderId);
 
-        if (!isAdmin)
+        if (!canManageStatus)
         {
             query = query.Where(o => o.UserId == userId);
         }
@@ -182,7 +191,7 @@ public class OrderWorkflowService : IOrderingService
         var order = await query.FirstOrDefaultAsync(cancellationToken);
         if (order is null)
         {
-            throw new NotFoundException($"Заказ с Id '{orderId}' не найден.");
+            throw new NotFoundException($"Замовлення з Id '{orderId}' не знайдено.");
         }
 
         if (order.Status == OrderStatus.Cancelled)
@@ -192,12 +201,17 @@ public class OrderWorkflowService : IOrderingService
 
         if (order.Status is OrderStatus.Shipped or OrderStatus.Delivered)
         {
-            throw new ConflictException("Невозможно отменить заказ, который уже отправлен или доставлен.");
+            throw new ConflictException("Неможливо скасувати замовлення, яке вже відправлено або доставлено.");
         }
 
         order.Status = OrderStatus.Cancelled;
         order.UpdatedAtUtc = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var itemsToRelease = order.Items
+            .Select(i => new OrderItemRequest(i.ProductId, i.Quantity))
+            .ToList();
+        await _catalog.ReleaseStockAsync(itemsToRelease, cancellationToken);
 
         return MapToResponse(order);
     }
@@ -210,19 +224,86 @@ public class OrderWorkflowService : IOrderingService
 
         if (order is null)
         {
-            throw new NotFoundException($"Заказ с Id '{orderId}' не найден.");
+            throw new NotFoundException($"Замовлення з Id '{orderId}' не знайдено.");
         }
 
         if (order.Status == OrderStatus.Cancelled && newStatus != OrderStatus.Cancelled)
         {
-            throw new ConflictException("Невозможно изменить статус уже отмененного заказа.");
+            throw new ConflictException("Неможливо змінити статус вже скасованого замовлення.");
         }
+
+        if (order.Status == OrderStatus.Delivered && newStatus != OrderStatus.Delivered)
+        {
+            throw new ConflictException("Неможливо змінити статус вже доставленого замовлення.");
+        }
+
+        if (!IsValidTransition(order.Status, newStatus))
+        {
+            throw new ConflictException($"Неприпустимий перехід статусу замовлення з '{order.Status}' на '{newStatus}'.");
+        }
+
+        var shouldReleaseStock = newStatus == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled;
 
         order.Status = newStatus;
         order.UpdatedAtUtc = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        if (shouldReleaseStock)
+        {
+            var itemsToRelease = order.Items
+                .Select(i => new OrderItemRequest(i.ProductId, i.Quantity))
+                .ToList();
+            await _catalog.ReleaseStockAsync(itemsToRelease, cancellationToken);
+        }
+
         return MapToResponse(order);
+    }
+
+    private static bool IsValidTransition(OrderStatus current, OrderStatus next)
+    {
+        if (current == next)
+        {
+            return true;
+        }
+
+        return current switch
+        {
+            OrderStatus.Pending => next is OrderStatus.Paid or OrderStatus.Shipped or OrderStatus.Cancelled,
+            OrderStatus.Paid => next is OrderStatus.Shipped or OrderStatus.Cancelled,
+            OrderStatus.Shipped => next is OrderStatus.Delivered,
+            OrderStatus.Delivered => false,
+            OrderStatus.Cancelled => false,
+            _ => false
+        };
+    }
+
+    private static void ValidatePaging(int? page, int? pageSize)
+    {
+        if (page is < 1)
+        {
+            throw new BadRequestException("Номер сторінки має бути більше 0.");
+        }
+
+        if (pageSize is < 1 or > MaxPageSize)
+        {
+            throw new BadRequestException($"Розмір сторінки має бути в діапазоні від 1 до {MaxPageSize}.");
+        }
+    }
+
+    private static async Task<IReadOnlyList<OrderResponse>> ExecutePagedQueryAsync(
+        IQueryable<Order> query,
+        int? page,
+        int? pageSize,
+        CancellationToken cancellationToken)
+    {
+        var ordered = query.OrderByDescending(o => o.CreatedAtUtc);
+
+        var paged = pageSize is null
+            ? ordered
+            : ordered.Skip(((page ?? 1) - 1) * pageSize.Value).Take(pageSize.Value);
+
+        var orders = await paged.ToListAsync(cancellationToken);
+        return orders.Select(MapToResponse).ToList();
     }
 
     private static string? BuildScopedKey(Guid userId, string? idempotencyKey)
@@ -234,7 +315,7 @@ public class OrderWorkflowService : IOrderingService
 
         if (idempotencyKey.Length > MaxIdempotencyKeyLength)
         {
-            throw new BadRequestException($"Idempotency-Key не должен превышать {MaxIdempotencyKeyLength} символов.");
+            throw new BadRequestException($"Idempotency-Key не повинен перевищувати {MaxIdempotencyKeyLength} символів.");
         }
 
         return $"{userId:N}:{idempotencyKey}";

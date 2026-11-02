@@ -27,7 +27,7 @@ public static class HealthEndpoints
         .AllowAnonymous()
         .WithTags("Health")
         .WithName("HealthCheck")
-        .WithSummary("Состояние сервиса, его БД и доступность CatalogService")
+        .WithSummary("Стан сервісу, його БД та доступність CatalogService")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status503ServiceUnavailable);
 

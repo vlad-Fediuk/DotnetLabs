@@ -34,8 +34,8 @@ public class CatalogFailureTests : OrderingTestBase
         response.Headers.RetryAfter.Should().NotBeNull();
         var body = await ReadJsonAsync(response);
         body.GetProperty("status").GetInt32().Should().Be(503);
-        body.GetProperty("title").GetString().Should().Be("Сервис временно недоступен");
-        body.GetProperty("detail").GetString().Should().Be("Каталог товаров временно недоступен. Повторите запрос позже.");
+        body.GetProperty("title").GetString().Should().Be("Сервіс тимчасово недоступний");
+        body.GetProperty("detail").GetString().Should().Be("Каталог товарів тимчасово недоступний. Повторіть запит пізніше.");
 
         await Factory.WithDbContextAsync(async db =>
         {

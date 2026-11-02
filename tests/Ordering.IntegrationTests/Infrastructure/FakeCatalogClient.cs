@@ -26,6 +26,11 @@ public class FakeCatalogClient : CatalogGrpcService.CatalogGrpcServiceClient
         return item;
     }
 
+    public int GetStock(string itemId)
+    {
+        return _items.TryGetValue(itemId, out var item) ? item.StockQuantity : 0;
+    }
+
     public IDisposable FailWith(StatusCode statusCode)
     {
         _failure = statusCode;
@@ -52,7 +57,7 @@ public class FakeCatalogClient : CatalogGrpcService.CatalogGrpcServiceClient
         }
 
         var response = new CatalogItemsResponse();
-        response.Items.AddRange(request.Ids.Where(_items.ContainsKey).Select(id => _items[id]));
+        response.Items.AddRange(request.Ids.Where(_items.ContainsKey).Select(id => _items[id].Clone()));
         return Succeeded(response);
     }
 
@@ -66,6 +71,58 @@ public class FakeCatalogClient : CatalogGrpcService.CatalogGrpcServiceClient
         return _items.TryGetValue(request.ItemId, out var item)
             ? Succeeded(new CheckStockResponse { IsAvailable = item.StockQuantity >= request.Quantity, AvailableQuantity = item.StockQuantity })
             : Failed<CheckStockResponse>(StatusCode.NotFound);
+    }
+
+    public override AsyncUnaryCall<ReserveStockResponse> ReserveStockAsync(ReserveStockRequest request, CallOptions options)
+    {
+        if (_failure is { } failure)
+        {
+            return Failed<ReserveStockResponse>(failure);
+        }
+
+        foreach (var reqItem in request.Items)
+        {
+            if (!_items.TryGetValue(reqItem.ItemId, out var item) || !item.IsActive)
+            {
+                return Failed<ReserveStockResponse>(StatusCode.NotFound);
+            }
+
+            if (item.StockQuantity < reqItem.Quantity)
+            {
+                return Succeeded(new ReserveStockResponse
+                {
+                    Success = false,
+                    FailedItemId = item.Id,
+                    AvailableQuantity = item.StockQuantity,
+                    ErrorMessage = $"Недостатньо товару '{item.Title}' на складі. Доступно: {item.StockQuantity}, запитано: {reqItem.Quantity}."
+                });
+            }
+        }
+
+        foreach (var reqItem in request.Items)
+        {
+            _items[reqItem.ItemId].StockQuantity -= reqItem.Quantity;
+        }
+
+        return Succeeded(new ReserveStockResponse { Success = true });
+    }
+
+    public override AsyncUnaryCall<ReleaseStockResponse> ReleaseStockAsync(ReleaseStockRequest request, CallOptions options)
+    {
+        if (_failure is { } failure)
+        {
+            return Failed<ReleaseStockResponse>(failure);
+        }
+
+        foreach (var reqItem in request.Items)
+        {
+            if (_items.TryGetValue(reqItem.ItemId, out var item))
+            {
+                item.StockQuantity += reqItem.Quantity;
+            }
+        }
+
+        return Succeeded(new ReleaseStockResponse { Success = true });
     }
 
     private static AsyncUnaryCall<T> Succeeded<T>(T response) => new(

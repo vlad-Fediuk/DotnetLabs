@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using ECommerce.Shared.Security;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Ordering.IntegrationTests.Infrastructure;
@@ -16,12 +17,14 @@ public class CancelOrderTests : OrderingTestBase
     }
 
     [Fact]
-    public async Task Cancel_OwnOrder_ChangesStatusAndKeepsRecord()
+    public async Task Cancel_OwnOrder_ChangesStatusKeepsRecordAndReleasesStock()
     {
         var item = Factory.Catalog.AddItem("Cancelable", 10, 100);
         var client = CreateClient(Guid.NewGuid());
-        var created = await CreateOrderAsync(client, Guid.Parse(item.Id), 1);
+        var created = await CreateOrderAsync(client, Guid.Parse(item.Id), 3);
         var orderId = created.GetProperty("id").GetGuid();
+
+        Factory.Catalog.GetStock(item.Id).Should().Be(97);
 
         var response = await client.PostAsync($"/api/orders/{orderId}/cancel", null);
 
@@ -29,6 +32,8 @@ public class CancelOrderTests : OrderingTestBase
         var body = await ReadJsonAsync(response);
         body.GetProperty("id").GetGuid().Should().Be(orderId);
         body.GetProperty("status").GetInt32().Should().Be((int)OrderStatus.Cancelled);
+
+        Factory.Catalog.GetStock(item.Id).Should().Be(100);
 
         await Factory.WithDbContextAsync(async db =>
         {
@@ -39,11 +44,11 @@ public class CancelOrderTests : OrderingTestBase
     }
 
     [Fact]
-    public async Task Cancel_Repeatedly_Returns200WithCancelledStatus()
+    public async Task Cancel_Repeatedly_Returns200WithCancelledStatusAndReleasesStockOnce()
     {
-        var item = Factory.Catalog.AddItem("Cancelable", 10, 100);
+        var item = Factory.Catalog.AddItem("Cancelable", 10, 50);
         var client = CreateClient(Guid.NewGuid());
-        var orderId = (await CreateOrderAsync(client, Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
+        var orderId = (await CreateOrderAsync(client, Guid.Parse(item.Id), 5)).GetProperty("id").GetGuid();
 
         var first = await client.PostAsync($"/api/orders/{orderId}/cancel", null);
         var second = await client.PostAsync($"/api/orders/{orderId}/cancel", null);
@@ -51,6 +56,7 @@ public class CancelOrderTests : OrderingTestBase
         first.StatusCode.Should().Be(HttpStatusCode.OK);
         second.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ReadJsonAsync(second)).GetProperty("status").GetInt32().Should().Be((int)OrderStatus.Cancelled);
+        Factory.Catalog.GetStock(item.Id).Should().Be(50);
     }
 
     [Fact]
@@ -73,14 +79,14 @@ public class CancelOrderTests : OrderingTestBase
         var item = Factory.Catalog.AddItem("Shipped", 10, 100);
         var client = CreateClient(Guid.NewGuid());
         var orderId = (await CreateOrderAsync(client, Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
-        var adminClient = CreateClient(Guid.NewGuid(), "Admin");
+        var adminClient = CreateClient(Guid.NewGuid(), RoleNames.Admin);
         (await adminClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Shipped }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
         var response = await client.PostAsync($"/api/orders/{orderId}/cancel", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        (await ReadJsonAsync(response)).GetProperty("title").GetString().Should().Be("Конфликт данных");
+        (await ReadJsonAsync(response)).GetProperty("title").GetString().Should().Be("Конфлікт даних");
     }
 
     [Fact]
@@ -96,9 +102,22 @@ public class CancelOrderTests : OrderingTestBase
     {
         var item = Factory.Catalog.AddItem("Admin updated", 10, 100);
         var orderId = (await CreateOrderAsync(CreateClient(Guid.NewGuid()), Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
-        var adminClient = CreateClient(Guid.NewGuid(), "Admin");
+        var adminClient = CreateClient(Guid.NewGuid(), RoleNames.Admin);
 
         var response = await adminClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Paid });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await ReadJsonAsync(response)).GetProperty("status").GetInt32().Should().Be((int)OrderStatus.Paid);
+    }
+
+    [Fact]
+    public async Task UpdateStatus_AsOrderOperatorRole_Returns200ViaPbac()
+    {
+        var item = Factory.Catalog.AddItem("Operator updated", 10, 100);
+        var orderId = (await CreateOrderAsync(CreateClient(Guid.NewGuid()), Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
+        var operatorClient = CreateClient(Guid.NewGuid(), RoleNames.OrderOperator);
+
+        var response = await operatorClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Paid });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ReadJsonAsync(response)).GetProperty("status").GetInt32().Should().Be((int)OrderStatus.Paid);
@@ -123,12 +142,26 @@ public class CancelOrderTests : OrderingTestBase
         var client = CreateClient(Guid.NewGuid());
         var orderId = (await CreateOrderAsync(client, Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
         await client.PostAsync($"/api/orders/{orderId}/cancel", null);
-        var adminClient = CreateClient(Guid.NewGuid(), "Admin");
+        var adminClient = CreateClient(Guid.NewGuid(), RoleNames.Admin);
 
         var response = await adminClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Paid });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadJsonAsync(response)).GetProperty("detail").GetString()
-            .Should().Be("Невозможно изменить статус уже отмененного заказа.");
+            .Should().Be("Неможливо змінити статус вже скасованого замовлення.");
+    }
+
+    [Fact]
+    public async Task UpdateStatus_BackwardFromShippedToPending_Returns409FsmViolation()
+    {
+        var item = Factory.Catalog.AddItem("FSM Item", 10, 100);
+        var client = CreateClient(Guid.NewGuid());
+        var orderId = (await CreateOrderAsync(client, Guid.Parse(item.Id), 1)).GetProperty("id").GetGuid();
+        var adminClient = CreateClient(Guid.NewGuid(), RoleNames.Admin);
+
+        await adminClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Shipped });
+        var backwardResponse = await adminClient.PatchAsJsonAsync($"/api/orders/{orderId}/status", new { status = (int)OrderStatus.Pending });
+
+        backwardResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 }
