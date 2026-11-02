@@ -6,3 +6,15 @@ public record CategoryDto(
     string Slug,
     string? Description
 );
+
+public record CreateCategoryRequest(
+    string Name,
+    string Slug,
+    string? Description
+);
+
+public record UpdateCategoryRequest(
+    string Name,
+    string Slug,
+    string? Description
+);

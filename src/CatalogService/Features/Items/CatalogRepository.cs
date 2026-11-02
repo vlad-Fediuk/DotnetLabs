@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using CatalogService.Data;
 using CatalogService.Features.Items.DTOs;
 using CatalogService.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CatalogService.Features.Items;
 
@@ -20,15 +20,25 @@ public class CatalogRepository : BaseRepository<Item>, ICatalogRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var searchPattern = $"%{filter.Search.Trim()}%";
-            query = query.Where(i => EF.Functions.ILike(i.Title, searchPattern) ||
-                                     (i.Description != null && EF.Functions.ILike(i.Description, searchPattern)) ||
-                                     EF.Functions.ILike(i.Sku, searchPattern));
+            var term = filter.Search.Trim().ToLowerInvariant();
+            query = query.Where(i => i.Title.ToLower().Contains(term) ||
+                                     (i.Description != null && i.Description.ToLower().Contains(term)) ||
+                                     i.Sku.ToLower().Contains(term));
         }
 
         if (filter.CategoryId.HasValue && filter.CategoryId.Value != Guid.Empty)
         {
             query = query.Where(i => i.CategoryId == filter.CategoryId.Value);
+        }
+
+        if (filter.MinPrice.HasValue)
+        {
+            query = query.Where(i => i.Price >= filter.MinPrice.Value);
+        }
+
+        if (filter.MaxPrice.HasValue)
+        {
+            query = query.Where(i => i.Price <= filter.MaxPrice.Value);
         }
 
         var isDesc = filter.Desc == true;
