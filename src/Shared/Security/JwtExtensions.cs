@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +14,9 @@ public static class JwtExtensions
     public static IServiceCollection AddJwtAuth(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSettings = configuration.GetSection("Jwt");
-        var secretKey = jwtSettings["SecretKey"] ?? jwtSettings["Key"] ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+        var secretKey = jwtSettings["Key"]
+                        ?? jwtSettings["SecretKey"]
+                        ?? throw new InvalidOperationException("JWT Key is not configured.");
         var issuer = jwtSettings["Issuer"] ?? "ECommerceApi";
         var audience = jwtSettings["Audience"] ?? "ECommerceApi";
 
@@ -33,12 +38,31 @@ public static class JwtExtensions
                 ValidIssuer = issuer,
                 ValidAudience = audience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                ClockSkew = TimeSpan.FromSeconds(30)
+                ClockSkew = TimeSpan.FromSeconds(5),
+                RoleClaimType = ClaimTypes.Role,
+                NameClaimType = ClaimTypes.NameIdentifier
             };
         });
 
-        services.AddAuthorization();
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        services.AddAuthorization(options =>
+        {
+            foreach (var permission in Permissions.All)
+            {
+                options.AddPolicy(permission, policy =>
+                    policy.Requirements.Add(new PermissionRequirement(permission)));
+            }
+        });
 
         return services;
+    }
+
+    public static IApplicationBuilder UseJwtAuth(this IApplicationBuilder app)
+    {
+        app.UseAuthentication();
+        app.UseMiddleware<GatewayIdentityMiddleware>();
+        app.UseAuthorization();
+        return app;
     }
 }

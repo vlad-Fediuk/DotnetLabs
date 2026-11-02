@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ECommerce.Shared.Common;
 
 public class PagedResult<T>
@@ -6,14 +8,19 @@ public class PagedResult<T>
     public int Page { get; init; }
     public int PageSize { get; init; }
     public int TotalCount { get; init; }
-    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
     public bool HasPreviousPage => Page > 1;
     public bool HasNextPage => Page < TotalPages;
 
-    public PagedResult(IReadOnlyList<T> items, int count, int page, int pageSize)
+    [JsonConstructor]
+    public PagedResult()
+    {
+    }
+
+    public PagedResult(IReadOnlyList<T> items, int totalCount, int page, int pageSize)
     {
         Items = items;
-        TotalCount = count;
+        TotalCount = totalCount;
         Page = page;
         PageSize = pageSize;
     }
