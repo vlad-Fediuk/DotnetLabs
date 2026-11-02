@@ -1,18 +1,19 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi;
 using AuthService.Data;
 using AuthService.Features.Auth;
 using AuthService.Features.Users;
 using AuthService.Models;
+using ECommerce.Shared.Filters;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Security;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
+builder.Services.AddDbContext<AuthDbContext>((sp, options) =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    var connectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     options.UseNpgsql(connectionString);
 });
@@ -27,6 +28,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationActionFilter>();
+});
+
 builder.Services.AddJwtAuth(builder.Configuration);
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -39,7 +45,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Auth Service API",
         Version = "v1",
-        Description = "Microservice for Authentication and User Management"
+        Description = "Microservice for Authentication, PBAC Permissions, and User Management"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -63,16 +69,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    await db.Database.MigrateAsync();
-    var admin = await db.Users.FirstOrDefaultAsync(u => u.Email == "admin@ecommerce.com");
-    if (admin != null)
-    {
-        admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!");
-        await db.SaveChangesAsync();
-    }
+    await app.InitializeDatabaseAsync();
 }
 
 app.UseExceptionHandler();
@@ -84,11 +83,9 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseJwtAuth();
 
-app.MapAuthEndpoints();
-app.MapUserEndpoints();
+app.MapControllers();
 
 app.MapGet("/health", async (AuthDbContext db) =>
 {
@@ -104,10 +101,12 @@ app.MapGet("/health", async (AuthDbContext db) =>
         return Results.Json(new { service = "AuthService", status = "Unhealthy", error = ex.Message }, statusCode: 503);
     }
 })
+.AllowAnonymous()
 .WithName("HealthCheck")
-.WithTags("Health")
-.WithSummary("Check service and database health");
+.WithTags("Health");
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.Run();
+
+public partial class Program;

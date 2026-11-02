@@ -2,9 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using AuthService.Models;
+using ECommerce.Shared.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using AuthService.Models;
 
 namespace AuthService.Features.Auth;
 
@@ -20,7 +21,9 @@ public class TokenService : ITokenService
     public (string Token, DateTime ExpiresAt) GenerateAccessToken(User user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
-        var secretKey = jwtSettings["Key"] ?? jwtSettings["SecretKey"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+        var secretKey = jwtSettings["Key"]
+                        ?? jwtSettings["SecretKey"]
+                        ?? throw new InvalidOperationException("Jwt:Key is not configured.");
         var issuer = jwtSettings["Issuer"] ?? "ECommerceApi";
         var audience = jwtSettings["Audience"] ?? "ECommerceApi";
         var accessTokenMinutes = int.TryParse(jwtSettings["AccessTokenMinutes"], out var minutes) ? minutes : 15;
@@ -38,10 +41,26 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        foreach (var userRole in user.UserRoles)
+        var roleNames = user.UserRoles
+            .Where(ur => ur.Role != null && !string.IsNullOrWhiteSpace(ur.Role.Name))
+            .Select(ur => ur.Role.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (roleNames.Count == 0)
         {
-            var roleName = userRole.Role?.Name ?? (userRole.RoleId == 2 ? "Admin" : "User");
+            roleNames.Add(RoleNames.User);
+        }
+
+        foreach (var roleName in roleNames)
+        {
             claims.Add(new Claim(ClaimTypes.Role, roleName));
+        }
+
+        var permissions = RolePermissions.GetPermissionsForRoles(roleNames);
+        foreach (var permission in permissions)
+        {
+            claims.Add(new Claim(Permissions.ClaimType, permission));
         }
 
         var expiresAt = DateTime.UtcNow.AddMinutes(accessTokenMinutes);
