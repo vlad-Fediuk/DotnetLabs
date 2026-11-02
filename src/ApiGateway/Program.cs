@@ -6,6 +6,7 @@ using ApiGateway.Clients;
 using ApiGateway.Middleware;
 using ApiGateway.Services;
 using ECommerce.Shared.Security;
+using ECommerce.Shared.Supabase;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using Ocelot.DependencyInjection;
@@ -57,6 +58,8 @@ builder.Services.AddHttpClient<IAuthClient, AuthClient>(client =>
 });
 
 builder.Services.AddScoped<IItemDetailsScreenAggregator, ItemDetailsScreenAggregator>();
+
+builder.Services.AddSupabaseClient(builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -167,6 +170,7 @@ app.Use(async (context, next) =>
     var dest = path.StartsWith("/health") ? "Internal (/health)" :
                path.StartsWith("/api/v1/screens") ? "Internal (Composed Screen)" :
                path.StartsWith("/api/v1/cache") ? "Internal (Cache Management)" :
+               path.StartsWith("/api/v1/supabase") ? "Internal (Supabase Integration)" :
                path.StartsWith("/api/v1/auth") || path.StartsWith("/api/v1/users") ? "AuthService (5001)" :
                path.StartsWith("/api/v1/catalog") ? "CatalogService (5002)" :
                path.StartsWith("/api/orders") ? "OrderingService (5003)" :

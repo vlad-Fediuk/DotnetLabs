@@ -5,6 +5,7 @@ using AuthService.Models;
 using ECommerce.Shared.Filters;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Security;
+using ECommerce.Shared.Supabase;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -25,6 +26,8 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService.Features.Auth.AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddSupabaseClient(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 

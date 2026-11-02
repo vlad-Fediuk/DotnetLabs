@@ -4,6 +4,7 @@ using CatalogService.Features.Items;
 using ECommerce.Shared.Filters;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Security;
+using ECommerce.Shared.Supabase;
 using FluentValidation;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,8 @@ builder.Services.AddDbContext<CatalogDbContext>((sp, options) =>
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICatalogService, CatalogService.Features.Items.CatalogService>();
+
+builder.Services.AddSupabaseClient(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
