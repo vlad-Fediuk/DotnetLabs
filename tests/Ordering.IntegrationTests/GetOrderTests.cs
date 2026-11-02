@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using ECommerce.Shared.Security;
 using FluentAssertions;
 using Ordering.IntegrationTests.Infrastructure;
 using Xunit;
@@ -49,8 +50,8 @@ public class GetOrderTests : OrderingTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await ReadJsonAsync(response);
-        body.GetProperty("title").GetString().Should().Be("Ресурс не найден");
-        body.GetProperty("detail").GetString().Should().Be($"Заказ с Id '{orderId}' не найден.");
+        body.GetProperty("title").GetString().Should().Be("Ресурс не знайдено");
+        body.GetProperty("detail").GetString().Should().Be($"Замовлення з Id '{orderId}' не знайдено.");
         body.TryGetProperty("items", out _).Should().BeFalse();
         body.TryGetProperty("userId", out _).Should().BeFalse();
     }
@@ -61,12 +62,29 @@ public class GetOrderTests : OrderingTestBase
         var item = Factory.Catalog.AddItem("Visible to admin", 10, 100);
         var ownerId = Guid.NewGuid();
         var created = await CreateOrderAsync(CreateClient(ownerId), Guid.Parse(item.Id), 1);
-        var adminClient = CreateClient(Guid.NewGuid(), "Admin");
+        var adminClient = CreateClient(Guid.NewGuid(), RoleNames.Admin);
 
         var response = await adminClient.GetAsync($"/api/orders/{created.GetProperty("id").GetGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await ReadJsonAsync(response)).GetProperty("userId").GetGuid().Should().Be(ownerId);
+    }
+
+    [Fact]
+    public async Task GetAllOrders_AsSupportOrAdmin_Returns200_WhileRegularUserGets403()
+    {
+        var item = Factory.Catalog.AddItem("Global Order", 10, 100);
+        var buyerId = Guid.NewGuid();
+        await CreateOrderAsync(CreateClient(buyerId), Guid.Parse(item.Id), 1);
+
+        var regularUserResponse = await CreateClient(buyerId, RoleNames.User).GetAsync("/api/orders/all");
+        regularUserResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        var supportClient = CreateClient(Guid.NewGuid(), RoleNames.Support);
+        var supportResponse = await supportClient.GetAsync($"/api/orders/all?userId={buyerId}");
+        supportResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await ReadJsonAsync(supportResponse);
+        orders.GetArrayLength().Should().BeGreaterThanOrEqualTo(1);
     }
 
     [Fact]

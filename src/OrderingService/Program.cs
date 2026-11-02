@@ -1,3 +1,5 @@
+using ECommerce.Shared.Filters;
+using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Protos;
 using ECommerce.Shared.Security;
 using FluentValidation;
@@ -30,7 +32,12 @@ builder.Services.AddScoped<IOrderingService, OrderWorkflowService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-builder.Services.AddExceptionHandler<OrderingExceptionHandler>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationActionFilter>();
+});
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -40,7 +47,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Ordering Service API",
         Version = "v1",
-        Description = "Микросервис оформления и сопровождения заказов. Данные каталога запрашиваются у CatalogService по gRPC, идентификатор пользователя берется из JWT."
+        Description = "Мікросервіс оформлення та супроводу замовлень."
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -88,10 +95,9 @@ app.UseSwaggerUI(c =>
     c.DisplayRequestDuration();
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseJwtAuth();
 
-app.MapOrderEndpoints();
+app.MapControllers();
 app.MapHealthEndpoints();
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();

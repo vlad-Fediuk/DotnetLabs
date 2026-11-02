@@ -74,8 +74,8 @@ public class CreateOrderTests : OrderingTestBase
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await ReadJsonAsync(response);
         body.GetProperty("status").GetInt32().Should().Be(404);
-        body.GetProperty("title").GetString().Should().Be("Ресурс не найден");
-        body.GetProperty("detail").GetString().Should().Be($"Товар с Id '{missingId}' не найден.");
+        body.GetProperty("title").GetString().Should().Be("Ресурс не знайдено");
+        body.GetProperty("detail").GetString().Should().Be($"Товар з Id '{missingId}' не знайдено.");
         body.GetProperty("instance").GetString().Should().Be("/api/orders");
     }
 
@@ -103,7 +103,7 @@ public class CreateOrderTests : OrderingTestBase
         body.GetProperty("status").GetInt32().Should().Be(400);
         body.GetProperty("title").GetString().Should().Be("One or more validation errors occurred.");
         body.GetProperty("errors").GetProperty("Items[0].Quantity")[0].GetString()
-            .Should().Be("Количество товара должно быть больше 0");
+            .Should().Be("Кількість товару має бути більше 0");
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class CreateOrderTests : OrderingTestBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await ReadJsonAsync(response);
         body.GetProperty("errors").GetProperty("Items")[0].GetString()
-            .Should().Be("Заказ должен содержать хотя бы один товар");
+            .Should().Be("Замовлення має містити хоча б один товар");
     }
 
     [Fact]
@@ -129,8 +129,8 @@ public class CreateOrderTests : OrderingTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var body = await ReadJsonAsync(response);
-        body.GetProperty("title").GetString().Should().Be("Конфликт данных");
-        body.GetProperty("detail").GetString().Should().Be("Недостаточно товара 'Scarce' на складе. Доступно: 3, запрошено: 5.");
+        body.GetProperty("title").GetString().Should().Be("Конфлікт даних");
+        body.GetProperty("detail").GetString().Should().Be("Недостатньо товару 'Scarce' на складі. Доступно: 3, запитано: 5.");
     }
 
     [Fact]

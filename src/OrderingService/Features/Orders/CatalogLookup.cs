@@ -1,6 +1,7 @@
 using ECommerce.Shared.Exceptions;
 using ECommerce.Shared.Protos;
 using Grpc.Core;
+using OrderingService.Features.Orders.DTOs;
 
 namespace OrderingService.Features.Orders;
 
@@ -34,12 +35,68 @@ public class CatalogLookup : ICatalogLookup
         }
         catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
         {
-            throw new NotFoundException("Товар не найден.");
+            throw new NotFoundException("Товар не знайдено.");
         }
         catch (RpcException ex) when (ex.StatusCode is StatusCode.DeadlineExceeded or StatusCode.Unavailable)
         {
             _logger.LogWarning("Catalog gRPC call failed with {StatusCode}", ex.StatusCode);
-            throw new ServiceUnavailableException("Каталог товаров временно недоступен. Повторите запрос позже.");
+            throw new ServiceUnavailableException("Каталог товарів тимчасово недоступний. Повторіть запит пізніше.");
+        }
+    }
+
+    public async Task ReserveStockAsync(IReadOnlyList<OrderItemRequest> items, CancellationToken cancellationToken)
+    {
+        var request = new ReserveStockRequest();
+        request.Items.AddRange(items.Select(i => new StockItemQuantity
+        {
+            ItemId = i.ProductId.ToString(),
+            Quantity = i.Quantity
+        }));
+
+        try
+        {
+            var response = await _client.ReserveStockAsync(
+                request,
+                deadline: DateTime.UtcNow.Add(CallTimeout),
+                cancellationToken: cancellationToken);
+
+            if (!response.Success)
+            {
+                throw new ConflictException(string.IsNullOrWhiteSpace(response.ErrorMessage)
+                    ? "Недостатньо товару на складі."
+                    : response.ErrorMessage);
+            }
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            throw new NotFoundException("Товар не знайдено.");
+        }
+        catch (RpcException ex) when (ex.StatusCode is StatusCode.DeadlineExceeded or StatusCode.Unavailable)
+        {
+            _logger.LogWarning("Catalog gRPC ReserveStock failed with {StatusCode}", ex.StatusCode);
+            throw new ServiceUnavailableException("Каталог товарів тимчасово недоступний. Повторіть запит пізніше.");
+        }
+    }
+
+    public async Task ReleaseStockAsync(IReadOnlyList<OrderItemRequest> items, CancellationToken cancellationToken)
+    {
+        var request = new ReleaseStockRequest();
+        request.Items.AddRange(items.Select(i => new StockItemQuantity
+        {
+            ItemId = i.ProductId.ToString(),
+            Quantity = i.Quantity
+        }));
+
+        try
+        {
+            await _client.ReleaseStockAsync(
+                request,
+                deadline: DateTime.UtcNow.Add(CallTimeout),
+                cancellationToken: cancellationToken);
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogWarning("Catalog gRPC ReleaseStock failed with {StatusCode}: {Detail}", ex.StatusCode, ex.Status.Detail);
         }
     }
 
