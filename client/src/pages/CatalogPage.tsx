@@ -340,6 +340,26 @@ export function CatalogPage() {
                 </Card>
               ))}
             </div>
+          ) : itemsQuery.isError ? (
+            <Card className="flex flex-col items-center justify-center p-12 text-center space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">
+                Не вдалося завантажити каталог
+              </h3>
+              <p className="max-w-sm text-xs text-zinc-500">
+                Сервіс тимчасово недоступний або очікує підключення. Спробуйте оновити дані.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => itemsQuery.refetch()}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Спробувати знову
+              </Button>
+            </Card>
           ) : items.length === 0 ? (
             <Card className="flex flex-col items-center justify-center p-12 text-center">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">

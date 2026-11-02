@@ -25,10 +25,10 @@ export const useAuthStore = create<AuthState>()(
 
       setSession: (auth) =>
         set({
-          user: auth.user,
-          accessToken: auth.accessToken,
-          refreshToken: auth.refreshToken,
-          expiresAt: auth.expiresAt,
+          user: auth?.user ?? null,
+          accessToken: auth?.accessToken ?? null,
+          refreshToken: auth?.refreshToken ?? null,
+          expiresAt: auth?.expiresAt ?? null,
         }),
 
       updateUser: (user) => set({ user }),
@@ -43,32 +43,34 @@ export const useAuthStore = create<AuthState>()(
 
       hasPermission: (permission) => {
         const currentUser = get().user;
-        if (!currentUser || !currentUser.permissions) {
+        if (!currentUser || !Array.isArray(currentUser.permissions)) {
           return false;
         }
         return currentUser.permissions.some(
-          (p) => p.toLowerCase() === permission.toLowerCase()
+          (p) => typeof p === 'string' && p.toLowerCase() === permission.toLowerCase()
         );
       },
 
       hasAnyPermission: (permissions) => {
         const currentUser = get().user;
-        if (!currentUser || !currentUser.permissions) {
+        if (!currentUser || !Array.isArray(currentUser.permissions)) {
           return false;
         }
         const lowerSet = new Set(
-          currentUser.permissions.map((p) => p.toLowerCase())
+          currentUser.permissions
+            .filter((p): p is string => typeof p === 'string')
+            .map((p) => p.toLowerCase())
         );
         return permissions.some((p) => lowerSet.has(p.toLowerCase()));
       },
 
       hasRole: (role) => {
         const currentUser = get().user;
-        if (!currentUser || !currentUser.roles) {
+        if (!currentUser || !Array.isArray(currentUser.roles)) {
           return false;
         }
         return currentUser.roles.some(
-          (r) => r.toLowerCase() === role.toLowerCase()
+          (r) => typeof r === 'string' && r.toLowerCase() === role.toLowerCase()
         );
       },
     }),
