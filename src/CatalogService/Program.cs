@@ -6,8 +6,20 @@ using CatalogService.Features.Categories;
 using CatalogService.Features.Items;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Security;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var restPort = builder.Configuration.GetValue("Kestrel:RestPort", 5002);
+var grpcPort = builder.Configuration.GetValue("Kestrel:GrpcPort", 5102);
+
+builder.WebHost.ConfigureKestrel(kestrel =>
+{
+    kestrel.ListenAnyIP(restPort, o => o.Protocols = HttpProtocols.Http1AndHttp2);
+    kestrel.ListenAnyIP(grpcPort, o => o.Protocols = HttpProtocols.Http2);
+});
+
+builder.Services.AddGrpc();
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
 {
@@ -58,6 +70,12 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 app.UseExceptionHandler();
 
 app.UseSwagger();
@@ -72,6 +90,7 @@ app.UseAuthorization();
 
 app.MapItemEndpoints();
 app.MapCategoryEndpoints();
+app.MapGrpcService<CatalogGrpcServiceImpl>();
 
 app.MapGet("/health", async (CatalogDbContext db) =>
 {

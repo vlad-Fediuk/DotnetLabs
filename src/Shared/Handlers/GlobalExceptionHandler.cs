@@ -30,6 +30,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
             FluentValidation.ValidationException => (StatusCodes.Status400BadRequest, "Validation Error"),
+            ServiceUnavailableException => (StatusCodes.Status503ServiceUnavailable, "Service Unavailable"),
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
@@ -49,6 +50,11 @@ public class GlobalExceptionHandler : IExceptionHandler
                     g => g.Key,
                     g => g.Select(e => e.ErrorMessage).ToArray()
                 );
+        }
+
+        if (exception is ServiceUnavailableException unavailableException)
+        {
+            httpContext.Response.Headers.RetryAfter = unavailableException.RetryAfterSeconds.ToString();
         }
 
         httpContext.Response.StatusCode = statusCode;

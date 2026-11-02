@@ -58,27 +58,19 @@ public class AppDbContext : DbContext
             entity.Property(o => o.OrderNumber).HasMaxLength(50).IsRequired();
             entity.Property(o => o.TotalAmount).HasPrecision(18, 2);
             entity.Property(o => o.Status).HasConversion<string>();
-
-            entity.HasOne(o => o.User)
-                  .WithMany(u => u.Orders)
-                  .HasForeignKey(o => o.UserId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(o => o.UserId);
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
             entity.HasKey(oi => oi.Id);
             entity.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
+            entity.Property(oi => oi.ProductName).HasMaxLength(255).IsRequired();
 
             entity.HasOne(oi => oi.Order)
                   .WithMany(o => o.Items)
                   .HasForeignKey(oi => oi.OrderId)
                   .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(oi => oi.Product)
-                  .WithMany(p => p.OrderItems)
-                  .HasForeignKey(oi => oi.ProductId)
-                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

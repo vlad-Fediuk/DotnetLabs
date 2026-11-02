@@ -27,3 +27,13 @@ public class UnauthorizedException : Exception
     {
     }
 }
+
+public class ServiceUnavailableException : Exception
+{
+    public ServiceUnavailableException(string message, int retryAfterSeconds = 5) : base(message)
+    {
+        RetryAfterSeconds = retryAfterSeconds;
+    }
+
+    public int RetryAfterSeconds { get; }
+}

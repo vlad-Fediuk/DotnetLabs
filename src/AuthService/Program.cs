@@ -66,6 +66,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    await db.Database.MigrateAsync();
     var admin = await db.Users.FirstOrDefaultAsync(u => u.Email == "admin@ecommerce.com");
     if (admin != null)
     {

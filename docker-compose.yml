@@ -1,0 +1,125 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecommerce-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1111}
+      POSTGRES_DB: ${POSTGRES_DB:-EcommerceDb}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    container_name: ecommerce-auth
+    build:
+      context: .
+      dockerfile: src/AuthService/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceAuthDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
+      Jwt__Key: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
+      Jwt__Issuer: ECommerceApi
+      Jwt__Audience: ECommerceApi
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  catalog-service:
+    container_name: ecommerce-catalog
+    build:
+      context: .
+      dockerfile: src/CatalogService/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+      - "5102:5102"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceCatalogDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
+      Jwt__Key: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
+      Jwt__Issuer: ECommerceApi
+      Jwt__Audience: ECommerceApi
+      Kestrel__RestPort: "5002"
+      Kestrel__GrpcPort: "5102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ordering-service:
+    container_name: ecommerce-ordering
+    build:
+      context: .
+      dockerfile: src/OrderingService/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5003:5003"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:5003
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceOrdersDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
+      LegacyImport__ConnectionString: Host=postgres;Port=5432;Database=EcommerceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
+      Services__CatalogGrpc: http://catalog-service:5102
+      Jwt__Key: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
+      Jwt__Issuer: ECommerceApi
+      Jwt__Audience: ECommerceApi
+    depends_on:
+      postgres:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
+
+  monolith:
+    container_name: ecommerce-monolith
+    build:
+      context: .
+      dockerfile: src/Monolith/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5100:5100"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=EcommerceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1111}
+      Services__CatalogGrpc: http://catalog-service:5102
+      Jwt__SecretKey: ${JWT_SECRET_KEY:-SuperSecretKeyForJwtAuthenticationMustBeAtLeast32BytesLong!}
+      Jwt__Issuer: ECommerceApi
+      Jwt__Audience: ECommerceApi
+    depends_on:
+      postgres:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
+
+  api-gateway:
+    container_name: ecommerce-gateway
+    build:
+      context: .
+      dockerfile: src/ApiGateway/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+    depends_on:
+      auth-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      ordering-service:
+        condition: service_started
+      monolith:
+        condition: service_started
+
+volumes:
+  pgdata:

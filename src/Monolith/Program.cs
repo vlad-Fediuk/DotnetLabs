@@ -1,3 +1,5 @@
+using ECommerce.Shared.Protos;
+using Microsoft.EntityFrameworkCore;
 using LR0.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +12,18 @@ builder.Services.AddFeatures();
 builder.Services.AddValidation();
 builder.Services.AddErrorHandling();
 
+builder.Services.AddGrpcClient<CatalogGrpcService.CatalogGrpcServiceClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["Services:CatalogGrpc"] ?? "http://localhost:5102");
+});
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<LR0.Database.AppDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 app.UseExceptionHandler();
 
