@@ -192,6 +192,7 @@ app.UseSwaggerUI(c =>
 
 app.UseEndpoints(endpoints =>
 {
+    endpoints.MapMethods("/", new[] { "GET", "HEAD" }, () => Results.Ok(new { status = "Healthy", service = "ApiGateway" }));
     endpoints.MapControllers();
 });
 

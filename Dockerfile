@@ -23,6 +23,8 @@ RUN dotnet publish src/AuthService/AuthService.csproj -c Release -o /app/auth /p
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/auth ./auth
 COPY --from=build /app/catalog ./catalog
 COPY --from=build /app/ordering ./ordering
