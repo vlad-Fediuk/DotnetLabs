@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Truck,
   RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
@@ -128,6 +129,18 @@ export function ItemDetailsPage() {
           </Link>
         </Button>
       </div>
+
+      {screenQuery.data.activeOperationStatus === 'Unavailable' && (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+          <div>
+            <p className="font-semibold">Зверніть увагу: супутній сервіс замовлень тимчасово недоступний.</p>
+            <p className="text-amber-800 mt-0.5">
+              Основні дані товару відображаються коректно. Ваша історія покупок по цьому товару підтягнеться після відновлення сервісу.
+            </p>
+          </div>
+        </div>
+      )}
 
       {myActiveOperation && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50/70 p-4">

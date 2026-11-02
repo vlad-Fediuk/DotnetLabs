@@ -104,5 +104,16 @@ services:
       ordering-service:
         condition: service_started
 
+  client:
+    container_name: ecommerce-client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+
 volumes:
   pgdata:
