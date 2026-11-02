@@ -2,6 +2,7 @@ using ECommerce.Shared.Filters;
 using ECommerce.Shared.Handlers;
 using ECommerce.Shared.Protos;
 using ECommerce.Shared.Security;
+using ECommerce.Shared.Supabase;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -29,6 +30,8 @@ builder.Services.AddGrpcClient<CatalogGrpcService.CatalogGrpcServiceClient>((ser
 
 builder.Services.AddScoped<ICatalogLookup, CatalogLookup>();
 builder.Services.AddScoped<IOrderingService, OrderWorkflowService>();
+
+builder.Services.AddSupabaseClient(builder.Configuration);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
